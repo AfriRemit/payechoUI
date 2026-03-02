@@ -34,36 +34,6 @@ const Header: React.FC = () => {
               >
                 Dashboard
               </NavLink>
-              <NavLink 
-                to="/swap"
-                className={({ isActive }) => `text-primary hover:text-accent-green transition-colors duration-200 ${isActive ? 'text-accent-green' : ''}`}
-              >
-                Swap
-              </NavLink>
-              <NavLink 
-                to="/faucet"
-                className={({ isActive }) => `text-primary hover:text-accent-green transition-colors duration-200 ${isActive ? 'text-accent-green' : ''}`}
-              >
-                Faucet
-              </NavLink>
-              <NavLink 
-                to="/buy-sell"
-                className={({ isActive }) => `text-primary hover:text-accent-green transition-colors duration-200 ${isActive ? 'text-accent-green' : ''}`}
-              >
-                Buy/Sell
-              </NavLink>
-              <NavLink 
-                to="/activity"
-                className={({ isActive }) => `text-primary hover:text-accent-green transition-colors duration-200 ${isActive ? 'text-accent-green' : ''}`}
-              >
-                Activity
-              </NavLink>
-              <NavLink 
-                to="/utilities"
-                className={({ isActive }) => `text-primary hover:text-accent-green transition-colors duration-200 ${isActive ? 'text-accent-green' : ''}`}
-              >
-                Utilities
-              </NavLink>
             </nav>
           </div>
 
@@ -127,41 +97,6 @@ const Header: React.FC = () => {
                     className={({ isActive }) => `block text-left w-full text-primary hover:text-accent-green transition-colors duration-200 py-2 ${isActive ? 'text-accent-green' : ''}`}
                   >
                     Dashboard
-                  </NavLink>
-                  <NavLink 
-                    to="/swap"
-                    onClick={() => setIsMenuOpen(false)}
-                    className={({ isActive }) => `block text-left w-full text-primary hover:text-accent-green transition-colors duration-200 py-2 ${isActive ? 'text-accent-green' : ''}`}
-                  >
-                    Swap
-                  </NavLink>
-                  <NavLink 
-                    to="/faucet"
-                    onClick={() => setIsMenuOpen(false)}
-                    className={({ isActive }) => `block text-left w-full text-primary hover:text-accent-green transition-colors duration-200 py-2 ${isActive ? 'text-accent-green' : ''}`}
-                  >
-                    Faucet
-                  </NavLink>
-                  <NavLink 
-                    to="/buy-sell"
-                    onClick={() => setIsMenuOpen(false)}
-                    className={({ isActive }) => `block text-left w-full text-primary hover:text-accent-green transition-colors duration-200 py-2 ${isActive ? 'text-accent-green' : ''}`}
-                  >
-                    Buy/Sell
-                  </NavLink>
-                  <NavLink 
-                    to="/activity"
-                    onClick={() => setIsMenuOpen(false)}
-                    className={({ isActive }) => `block text-left w-full text-primary hover:text-accent-green transition-colors duration-200 py-2 ${isActive ? 'text-accent-green' : ''}`}
-                  >
-                    Activity
-                  </NavLink>
-                  <NavLink 
-                    to="/utilities"
-                    onClick={() => setIsMenuOpen(false)}
-                    className={({ isActive }) => `block text-left w-full text-primary hover:text-accent-green transition-colors duration-200 py-2 ${isActive ? 'text-accent-green' : ''}`}
-                  >
-                    Utilities
                   </NavLink>
                 </nav>
                 

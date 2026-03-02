@@ -2,6 +2,17 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 
+const VOICE_CONFIRMATIONS = [
+  { amount: '25', total: '120' },
+  { amount: '50', total: '200' },
+  { amount: '15', total: '85' },
+  { amount: '100', total: '340' },
+  { amount: '40', total: '160' },
+];
+
+// Duplicate for seamless scroll loop
+const SCROLL_ITEMS = [...VOICE_CONFIRMATIONS, ...VOICE_CONFIRMATIONS, ...VOICE_CONFIRMATIONS];
+
 const HeroSection: React.FC = () => {
   return (
     <section className="relative px-6 py-16 bg-primary overflow-hidden">
@@ -21,7 +32,7 @@ const HeroSection: React.FC = () => {
           <div className="space-y-3">
             <p className="text-sm text-accent-green font-medium">Base · USDC</p>
             <h1 className="text-5xl lg:text-6xl font-medium text-primary leading-tight">
-              Fraud proof QR payments that speak the truth.
+              Payments that speak the truth.
             </h1>
             <p className="text-xl text-secondary leading-relaxed">
               Accept USDC. Hear confirmation. Build onchain identity.
@@ -65,11 +76,36 @@ const HeroSection: React.FC = () => {
               Pay via QR with USDC
             </h2>
 
-            <div className="rounded-lg bg-tertiary p-5 mb-5">
-              <p className="text-sm font-medium text-primary mb-2">Instant voice confirmation</p>
-              <p className="text-primary text-base leading-relaxed">
-                “Payment confirmed. You received <strong>25 USDC</strong>. Total today: <strong>120 USDC</strong>.”
-              </p>
+            <div className="rounded-lg bg-tertiary p-5 mb-5 overflow-hidden">
+              <p className="text-sm font-medium text-primary mb-3">Instant voice confirmation</p>
+              <div className="h-24 overflow-hidden relative">
+                <div
+                  className="flex flex-col gap-2 absolute left-0 right-0 top-0 voice-confirmation-scroll"
+                  style={{
+                    animation: `voiceScroll 15s linear infinite`,
+                  }}
+                >
+                  {SCROLL_ITEMS.map((item, i) => (
+                    <div
+                      key={`${i}-${item.amount}-${item.total}`}
+                      className="text-primary text-sm leading-relaxed flex items-center justify-between gap-2 py-1.5 border-b border-white/5 last:border-0 shrink-0"
+                    >
+                      <span className="text-secondary">Payment confirmed.</span>
+                      <span>
+                        <span className="text-accent-green font-semibold">{item.amount} USDC</span>
+                        <span className="text-secondary"> received · Today: </span>
+                        <span className="text-accent-green font-semibold">{item.total} USDC</span>
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <style>{`
+                @keyframes voiceScroll {
+                  0% { transform: translateY(0); }
+                  100% { transform: translateY(-33.333%); }
+                }
+              `}</style>
             </div>
 
             <p className="text-sm text-secondary leading-relaxed mb-6">

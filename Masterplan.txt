@@ -1,0 +1,367 @@
+# PayEcho Protocol — Master Development Plan v2.0
+
+**The Onchain Financial Operating System for Informal Merchants**  
+Built on Base · Base Batch 3 Submission
+
+| | |
+|---|---|
+| **Version** | v2.0 — Full Production Spec |
+| **Target Chain** | Base (Ethereum L2) |
+| **Primary Token** | USDC (Circle) |
+| **Target Market** | Ghana + Pan-Africa |
+
+---
+
+## 1. Project Overview & Mission
+
+PayEcho Protocol is a Base-native merchant infrastructure platform engineered to onboard informal merchants in emerging markets into the global digital economy. It solves two systemic problems — **payment fraud** and **financial invisibility** — through three interconnected product pillars.
+
+| Pillar | Product | Business Purpose |
+|--------|---------|------------------|
+| **Payment Rail** | Accept USDC via QR. AI voice confirms. Immutable on Base. | Merchant acquisition. Fraud elimination. USDC velocity. |
+| **Identity Engine** | Every payment builds an onchain revenue ledger. Credit score computed automatically. | Data moat. Defensibility. Capital access qualification. |
+| **Embedded Finance** | Auto-savings vault. Revenue-based micro-loans. Auto-repayment. | Primary profit engine. Interest margin. Yield spread. |
+
+**One-line logic:** PayEcho acquires merchants through fraud-proof QR payments, captures their onchain revenue data, converts that data into financial identity, and monetises through embedded lending and financial services.
+
+### 1.1 Base Batch 3 — What Is Needed and What Is Optional
+
+Base Batch 3 requires building on Base Chain. The broader Base ecosystem provides optional tools. PayEcho uses each tool only where it solves a real problem — not to pad a checklist.
+
+| Tool | Status | Why / Why Not |
+|------|--------|---------------|
+| Base Chain | REQUIRED | All smart contracts deployed here. Settlement layer. Cannot be substituted. |
+| Wagmi v2 + Viem | REQUIRED | Industry standard for Base contract interaction in React. No viable alternative. |
+| OnchainKit — Checkout | USED | Powers the customer QR payment flow. Correct tool for USDC checkout UI. |
+| OnchainKit — Wallet | USED | Wallet connect component. Simplifies RainbowKit + WalletConnect setup significantly. |
+| OnchainKit — Identity | USED | Renders Basename + avatar on merchant profile. Zero custom build. |
+| Paymaster (CDP) | OPTIONAL | Sponsor gas for vault deployment. Improves merchant UX. Not required for MVP. |
+| MiniKit / Base App | NOT FOR MVP | Mini App distribution is Phase 2. MVP ships as standard Next.js PWA first. |
+| Aave / Morpho Yield | NOT FOR MVP | Savings yield is Phase 2. Phase 1 savings vault holds USDC without yield. |
+
+---
+
+## 2. Full System Architecture
+
+PayEcho is composed of five independently deployable layers. Each layer builds on the one below it — and compounds value as a merchant progresses through the system.
+
+### 2.1 Five-Layer Architecture
+
+- **LAYER 5 — Embedded Finance**  
+  Savings Vault · Revenue-Based Lending · Insurance (Phase 3)
+
+- **LAYER 4 — Credit Scoring Engine**  
+  Off-chain Oracle computes score · Writes to CreditOracle.sol · Queryable by lenders
+
+- **LAYER 3 — Onchain Revenue Ledger**  
+  All payments stored in MerchantVault · Immutable · Indexed by The Graph
+
+- **LAYER 2 — AI Voice + Event Layer**  
+  WebSocket listener on Base RPC · ElevenLabs AI voice confirmation
+
+- **LAYER 1 — QR Payment Rail**  
+  USDC payments on Base · MerchantVault smart contracts · OnchainKit Checkout
+
+### 2.2 Smart Contract Architecture — Core Contracts (Deployment on Base)
+
+| Contract | Type | Responsibility |
+|----------|------|----------------|
+| MerchantVault.sol | Core | Per-merchant contract. Receives USDC, stores payment history, enforces savings split, auto-repays loans. |
+| MerchantFactory.sol | Registry | Deploys a new MerchantVault for each merchant who registers. Maintains the global merchant registry. |
+| PayEchoRegistry.sol | Config | Protocol-level config: fee rates, min loan score, admin addresses, emergency pause. |
+| SavingsVault.sol | Finance | Receives savings split from MerchantVault. Phase 2: deposits into Aave for yield. Phase 1: holds USDC. |
+| LendingPool.sol | Finance | Issues USDC micro-loans. Auto-deducts repayment from incoming payments via MerchantVault hook. |
+| LiquidationEngine.sol | Finance | Triggered after 14-day grace period default. Marks loan defaulted, applies credit score penalty. |
+| CreditOracle.sol | Identity | Receives scores from the off-chain Oracle service. Queryable by LendingPool and external lenders. |
+| MerchantNFT.sol | Identity | ERC-721 reputation token. Dynamic metadata updates as credit score changes (Tier: Bronze → Gold). |
+| RevenueAttestation.sol | Identity | Monthly SBT (Soulbound Token). Minted automatically when monthly revenue exceeds threshold. |
+
+### 2.3 MerchantVault.sol — Full Interface (excerpt)
+
+- State: owner, usdcToken, lendingPool, totalReceived, totalWithdrawn, transactionCount, savingsRate, savingsBalance, Payment[] payments
+- Events: PaymentReceived, Withdrawn, SavingsConfigured, AutoRepayExecuted
+- Core: acceptPayment(amount, ref), withdraw(amount), enableAutoSavings(rateBPS), getPaymentHistory(), _autoRepay(net)
+
+### 2.4 Complete Payment Lifecycle
+
+| Step | Actor | What Happens |
+|------|-------|---------------|
+| 1 | Customer | Scans merchant QR code on any Base-compatible wallet |
+| 2 | Customer Wallet | Calls IERC20.approve() then MerchantVault.acceptPayment() |
+| 3 | MerchantVault | Validates amount > 0 · savings split · auto-repay · stores Payment · emits PaymentReceived |
+| 4 | Base Chain | Transaction confirmed in 200ms–2s. Immutable. Verifiable on Basescan. |
+| 5 | WebSocket Listener | Frontend detects PaymentReceived via Base RPC WebSocket (ethers.js) |
+| 6 | AI Voice Engine | Message: 'You received X USDC. Today total: Y USDC.' → POST /api/voice/speak → ElevenLabs → AudioContext.play() |
+| 7 | Dashboard | Real-time balance, transaction feed, analytics update without page reload |
+| 8 | Credit Oracle | Background job (24h) · recomputes score · writes to CreditOracle.sol |
+| 9 | MerchantNFT | If score tier changes, NFT metadata updated on IPFS |
+
+---
+
+## 3. Complete Feature Specifications
+
+### 3.1 Feature 1 — Merchant Onboarding & Vault Deployment
+
+- Wallet connect via OnchainKit <Wallet> (Base network enforced)
+- Merchant profile: business name, category, location, phone, preferred language
+- KYC-lite: phone + email verification (off-chain, PostgreSQL)
+- MerchantVault deployed via MerchantFactory.sol — zero config for merchant
+- Paymaster sponsors vault deployment gas (optional)
+- Unique QR code generated and linked to vault address
+- Onboarding tutorial: step-by-step walkthrough with AI voice demonstration
+
+### 3.2 Feature 2 — QR Payment System
+
+- Dynamic QR: vault address + merchant ID + optional fixed amount
+- Fixed-amount mode and open-amount mode
+- QR full-screen on merchant device; downloadable PNG; printable
+- Optional anti-replay: QR rotates after each payment
+- USDC primary. ETH auto-converted in Phase 2.
+
+### 3.3 Feature 3 — AI Voice Confirmation Engine
+
+| Component | Specification |
+|-----------|---------------|
+| AI Voice Provider | ElevenLabs (eleven_multilingual_v2) — primary. OpenAI TTS (tts-1-hd) — fallback. Web Speech API — browser fallback. |
+| Trigger | PaymentReceived via Base WebSocket RPC. Fires within 1–2s of block confirmation. |
+| Message Template | 'Payment confirmed. You received [X] USDC. Total today: [Y] USDC.' |
+| Voice Character | 'Echo' — warm, professional, African-accented English. Variants: Abena, Kwame, Amara. |
+| Languages (MVP) | English. Phase 2: Twi, French, Swahili. |
+| Delivery | Backend relay /api/voice/speak protects API key + rate-limits. AudioContext.play() — no browser prompt. |
+| Fallback Chain | ElevenLabs → OpenAI TTS → Web Speech API → silent visual toast |
+| Merchant Settings | Voice selector, language, volume (0–100%), quiet hours, repeat button, test button |
+| Cost Model | ~$0.024 per 1000 payments. Absorbed within 0.3% transaction fee. |
+
+### 3.4 Feature 4 — Merchant Dashboard
+
+- Real-time balance panel: liquid USDC + savings + locked in active loan
+- Live payment feed: amount, payer (shortened), timestamp, Basescan link — updates on event
+- Revenue charts: daily / weekly / monthly (Recharts)
+- Peak hours heatmap; top customers by payment frequency
+- Credit score gauge (0–1000) with tier badge: Seed → Bronze → Silver → Gold → Platinum
+- Score trend: 90-day credit score history chart
+- Savings panel: live split configurator with real-time preview
+- Loan panel: eligibility, loan request form, outstanding balance, repayment schedule
+- Export: CSV statement, PDF 'Proof of Revenue' certificate
+- Notifications: payment alerts, score changes, loan approvals, milestones
+
+### 3.5 Feature 5 — Onchain Revenue Ledger
+
+- Every payment in MerchantVault.payments[] — immutable, on-chain
+- Verifiable on Basescan; The Graph subgraph for fast queries
+- 'Proof of Revenue' PDF; monthly revenue SBT (Soulbound Token)
+- Ledger data feeds Credit Scoring Engine
+
+### 3.6 Feature 6 — Credit Scoring Engine
+
+Off-chain Oracle every 24h → written to CreditOracle.sol. Transparent, auditable.
+
+| Factor | Weight | How It Is Measured |
+|--------|--------|---------------------|
+| Revenue Stability | 25% | Coefficient of variation of weekly revenue. Lower volatility = higher score. |
+| Transaction Frequency | 20% | Avg daily transactions over rolling 30-day window. |
+| Revenue Growth Rate | 20% | Month-over-month % growth in USDC volume. |
+| Account Age | 15% | Days since first payment on MerchantVault. |
+| Loan Repayment History | 15% | On-time vs missed repayments across all loans. |
+| Average Transaction Size | 5% | Mean USDC per payment normalised to merchant category. |
+
+| Score Range | Tier | Lending Access |
+|-------------|------|----------------|
+| 0 – 299 | Seed | No lending. Build 90 days of history first. |
+| 300 – 499 | Bronze | Micro-loans up to 1x avg monthly revenue. Rate: 8%. |
+| 500 – 699 | Silver | Loans up to 2x avg monthly revenue. Rate: 6%. |
+| 700 – 849 | Gold | Loans up to 3x avg monthly revenue. Rate: 4%. |
+| 850 – 1000 | Platinum | Loans up to 5x avg monthly revenue. Rate: 2%. Enterprise API access. |
+
+### 3.7 Feature 7 — Auto-Savings Vault
+
+- Merchant configures % split at any time — enforced at contract level
+- Default: 80% liquid · 10% savings · 5% emergency reserve · 5% tax buffer
+- SavingsVault.sol on Base; emergency reserve 30-day lock, 2% early withdrawal penalty
+- Phase 2: Aave v3 on Base for yield passthrough
+
+### 3.8 Feature 8 — Revenue-Based Lending
+
+- Eligibility: 90+ days on-chain history, credit score >= 300
+- Loan: 1x–5x avg monthly revenue by tier; interest 2–8% flat at disbursement
+- Repayment: 15% of each incoming payment auto-deducted via MerchantVault._autoRepay()
+- Disbursement: USDC to merchant's MerchantVault liquid balance
+- Grace period: 14 days before LiquidationEngine marks default
+- Default: credit score penalty (−200) + loan marked defaulted onchain
+
+---
+
+## 4. Full Project Folder Structure
+
+### 4.1 Monorepo Root — payecho-protocol/
+
+- apps/: web (Next.js 14 merchant dashboard), mobile (PWA), admin (ops)
+- packages/: contracts, oracle, subgraph, sdk, shared
+- infrastructure/: docker, k8s, terraform (Phase 2+)
+- docs/, scripts/, .env.example, turbo.json, package.json, README.md
+
+### 4.2 Smart Contracts — packages/contracts/
+
+- src/core/: MerchantVault.sol, MerchantFactory.sol, PayEchoRegistry.sol
+- src/finance/: SavingsVault.sol, LendingPool.sol, LiquidationEngine.sol
+- src/identity/: CreditOracle.sol, MerchantNFT.sol, RevenueAttestation.sol
+- src/interfaces/, src/lib/, test/, integration/, deployments/, scripts/
+
+### 4.3 Next.js 14 Web App — apps/web/
+
+- app/(auth)/: connect/page.tsx, register/page.tsx, register/success/page.tsx
+- app/(dashboard)/: layout.tsx, page.tsx, qr/, transactions/, analytics/, savings/, lending/, identity/, voice/
+- app/api/: merchant/, credit-score/, voice/speak/, qr/, webhooks/
+- components/: ui/, merchant/, voice/, web3/
+- hooks/: useVaultEvents, useMerchantVault, useCreditScore, useVoiceAnnouncement, useQRCode, useAutoSavings, useLoan, useAnalytics
+- lib/: wagmi.ts, contracts.ts, base-rpc.ts, voice.ts, graph.ts, utils.ts
+
+### 4.4 Credit Oracle Service — packages/oracle/
+
+- src/: index.ts, scoring/engine.ts, factors/*.ts, indexer/, oracle/, api/
+
+### 4.5 The Graph Subgraph — packages/subgraph/
+
+- schema.graphql, subgraph.yaml, src/*.ts (merchant-vault, lending-pool, credit-oracle, savings-vault)
+
+### 4.6 PayEcho SDK — packages/sdk/
+
+- PayEchoClient.ts, VaultReader.ts, QRGenerator.ts, types.ts, errors.ts, README.md
+
+---
+
+## 5. Full Technology Stack
+
+- Blockchain: Base (Ethereum L2)
+- Contracts: Solidity ^0.8.20, OpenZeppelin v5, Hardhat + Foundry
+- Frontend: Next.js 14, Wagmi v2 + Viem, OnchainKit (Wallet, Checkout, Identity), Tailwind + Shadcn/ui, Recharts
+- Voice: ElevenLabs → OpenAI TTS → Web Speech API
+- Real-time: ethers.js WebSocket provider
+- Data: The Graph, PostgreSQL + Prisma, Redis (Upstash)
+- Auth: SIWE; NFT metadata via IPFS (Pinata)
+
+---
+
+## 6. Development Roadmap & Phases
+
+- **Phase 0 (Weeks 1–2):** Turborepo, Hardhat/Foundry Base Sepolia, Next.js + Wagmi/RainbowKit/OnchainKit, PostgreSQL/Prisma, CI, .env structure
+- **Phase 1 — MVP (Weeks 3–6) — Base Batch 3:** MerchantVault, MerchantFactory, PayEchoRegistry, wallet connect + onboarding + vault deploy, QR (fixed + open), WebSocket listener, AI Voice Engine, merchant dashboard (balance, feed, history), basic credit scoring v1, Base Sepolia deploy + seed, end-to-end demo
+- **Phase 2 (Weeks 7–12):** Full credit scoring, CreditOracle + scheduler, SavingsVault, LendingPool, LiquidationEngine, MerchantNFT, RevenueAttestation, The Graph, loan panel, Proof of Revenue PDF, Base Mainnet
+- **Phase 3 (Months 4–12):** Multi-language voice, IoT SoundBox, Aave yield, MiniKit, MoMo bridge, cross-border, Enterprise Scoring API, Nigeria/Kenya/Tanzania, insurance pilot
+
+---
+
+## 7. System Requirements
+
+### 7.1 Functional Requirements (summary)
+
+- FR-01: USDC on Base, PaymentReceived event, voice < 3s, concurrent payments, amount validation, history queryable
+- FR-02: One vault per merchant, immutable history, score within 24h, factor transparency, export, NFT on tier change
+- FR-03: Savings at contract level, auto-repay, lending gated by score, loan bounds, 14-day grace, emergency lock
+
+### 7.2 Non-Functional Requirements (summary)
+
+- AI voice latency < 3s (P0); dashboard TTI < 2s (P0); contract gas per payment < $0.01 (P0); event detection < 2s (P0); frontend 99.5% uptime; oracle 99%; score freshness < 24h; payment data 100% on-chain verifiable
+
+### 7.3 Security (summary)
+
+- ReentrancyGuard, access control, USDC bounds, no delegatecall/self-destruct Phase 1; SIWE sessions 24h; oracle key in secrets; rate limits; HMAC webhooks; CSP, sanitisation, CORS
+
+### 7.4 Environment Variables — Full Reference
+
+- Base: NEXT_PUBLIC_BASE_RPC_URL, NEXT_PUBLIC_BASE_WS_URL, NEXT_PUBLIC_BASE_SEPOLIA_*, NEXT_PUBLIC_CHAIN_ID
+- USDC: NEXT_PUBLIC_USDC_ADDRESS, NEXT_PUBLIC_USDC_SEPOLIA
+- Contracts: NEXT_PUBLIC_FACTORY_ADDRESS, NEXT_PUBLIC_REGISTRY_ADDRESS, NEXT_PUBLIC_CREDIT_ORACLE_ADDRESS, NEXT_PUBLIC_LENDING_POOL_ADDRESS, NEXT_PUBLIC_SAVINGS_VAULT_ADDRESS, NEXT_PUBLIC_MERCHANT_NFT_ADDRESS
+- Wallet: NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID, NEXT_PUBLIC_ONCHAINKIT_API_KEY
+- Database: DATABASE_URL, REDIS_URL
+- Oracle: ORACLE_PRIVATE_KEY, ORACLE_WEBHOOK_SECRET, GRAPH_API_URL, SCORE_UPDATE_INTERVAL_HOURS
+- Voice: ELEVENLABS_API_KEY, ELEVENLABS_DEFAULT_VOICE_ID, OPENAI_API_KEY
+- IPFS: PINATA_API_KEY, PINATA_SECRET
+- Monitoring: SENTRY_DSN, NEXT_PUBLIC_SENTRY_DSN
+
+---
+
+## 8. API Specifications
+
+### 8.1 Backend REST API
+
+- POST /api/merchants/register (SIWE) — register merchant
+- GET /api/merchants/:address — fetch profile + vault
+- GET /api/merchants/:address/score (SIWE) — full score object
+- GET /api/merchants/:address/loans (SIWE) — loan history
+- GET /api/merchants/:address/analytics (SIWE) — revenue aggregates
+- POST /api/loans/request (SIWE) — loan request
+- GET /api/qr/:address — QR data URI (?amount= optional)
+- POST /api/voice/speak (SIWE) — ElevenLabs relay, audio/mpeg stream
+- POST /api/oracle/update-score (Oracle Key)
+- POST /api/webhooks (HMAC)
+- GET /api/stats/global — protocol stats
+
+### 8.2 Smart Contract Events (summary)
+
+- MerchantVault: PaymentReceived, Withdrawn, SavingsConfigured, AutoRepayExecuted
+- LendingPool: LoanIssued, LoanRepaid, LoanFullyRepaid, LoanDefaulted
+- CreditOracle: ScoreUpdated
+- MerchantNFT: TierUpgraded, MetadataRefreshed
+- RevenueAttestation: AttestationMinted
+
+### 8.3 The Graph Schema (summary)
+
+- Merchant, Payment, Loan, ScoreUpdate entities with id, owner, amounts, timestamps, status, etc.
+
+---
+
+## 9. Testing Strategy
+
+- Contracts: Foundry unit + fuzz + invariant + integration + stress; 95%+ coverage
+- Frontend: Vitest + RTL, Playwright E2E, BrowserStack PWA
+- Oracle: factor unit tests, boundary, integration, scheduler
+- Security: Slither, Echidna, manual checklist, testnet stress
+
+---
+
+## 10. Deployment Plan
+
+- Deployment order: PayEchoRegistry → MerchantNFT → CreditOracle → SavingsVault → LendingPool → LiquidationEngine → RevenueAttestation → MerchantFactory
+- Env progression: local → Base Sepolia (84532) → Base Mainnet (8453); mainnet requires audit + multisig
+- Monitoring: Tenderly, Sentry, The Graph sync, Railway health
+
+---
+
+## 11. Business Model & Financial Projections
+
+- Revenue: transaction fee 0.3–0.5%, lending interest 2–8%, savings yield spread (Phase 2), Enterprise Scoring API, premium analytics, hardware (Phase 3)
+- Projections: Y1 1K merchants / $5M volume / $50K revenue → Y3 75K merchants / $750M volume / $6M revenue
+
+---
+
+## 12. Risk Register & Mitigations
+
+- Contract exploit, USDC de-peg, low adoption, regulatory, oracle manipulation, default rate, ElevenLabs outage, The Graph outage — each with likelihood, impact, mitigation
+
+---
+
+## 13. Base Batch 3 — MVP Deliverables
+
+- MerchantVault.sol, MerchantFactory.sol, PayEchoRegistry.sol
+- Next.js wallet connect + onboarding + vault deploy
+- QR generator (fixed + open amount)
+- WebSocket listener + PaymentFeed
+- AI Voice Engine (full fallback chain)
+- Merchant dashboard (balance, feed, history)
+- Basic credit scoring v1
+- Base Sepolia deployment + seed
+- End-to-end demo: Register → QR → Pay → Voice → Dashboard → Score
+
+**Demo flow:** Merchant registers → Vault deployed → QR generated → Customer pays 20 USDC → Voice announces — Dashboard updates — Credit score updates. Live on Base Sepolia. No screenshots. No fake confirmations.
+
+---
+
+## 14. Final Positioning Statement
+
+**PayEcho Protocol**  
+Infrastructure that transforms everyday merchant transactions into financial identity and programmable capital — powered by Base.
+
+*"When money speaks, identity grows."*
+
+This document is the complete technical and business specification for PayEcho Protocol v2.0 — from Solidity to Next.js dashboard to credit oracle — with every folder, file, API, requirement, and risk accounted for. Base Batch 3 MVP is scoped to a working, demonstrable product in 6 weeks; full roadmap extends to 75,000 merchants and $750M volume — the financial operating system for informal commerce across Africa, built on Base.
