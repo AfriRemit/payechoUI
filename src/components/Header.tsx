@@ -82,7 +82,7 @@ const Header: React.FC = () => {
             <ConnectButton 
               client={client}
               connectButton={{
-                label: 'Connect',
+                label: 'Become a Merchant',
                 className: '!bg-accent-green !hover:bg-accent-green-hover !text-white !rounded-full !px-6 !py-2 !font-medium'
               }}
               detailsButton={{
@@ -171,7 +171,7 @@ const Header: React.FC = () => {
                   <ConnectButton 
                     client={client}
                     connectButton={{
-                      label: 'Connect',
+                      label: 'Become a Merchant',
                       className: '!bg-accent-green !hover:bg-accent-green-hover !text-white !rounded-full !px-6 !py-2 !font-medium'
                     }}
                     detailsButton={{
