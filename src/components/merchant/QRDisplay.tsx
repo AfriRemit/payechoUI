@@ -49,7 +49,7 @@ export function QRDisplay({
   };
 
   return (
-    <div className="bg-secondary rounded-xl border border-white/10 p-5 flex flex-col h-full min-h-0">
+    <div className="flex flex-col h-full min-h-0 w-full">
       <div className="flex flex-col items-center justify-center flex-1 min-h-0">
         {qrDataUrl && !error ? (
           <>

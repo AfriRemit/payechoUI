@@ -64,7 +64,7 @@ const Register: React.FC = () => {
         transition={{ duration: 0.4 }}
         className="w-full max-w-lg"
       >
-        <div className="bg-secondary rounded-xl border border-white/10 p-6 md:p-8 shadow-card-dark">
+        <div className="bg-secondary rounded-xl border border-white/10 p-6 md:p-8">
           <p className="text-sm font-medium text-accent-green mb-2">Step 2 of 3</p>
           <h1 className="text-2xl md:text-3xl font-semibold text-primary mb-2">
             Create your merchant profile

@@ -1,4 +1,4 @@
-import { NavLink, Outlet, Navigate } from 'react-router-dom';
+import { Link, NavLink, Outlet, Navigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard,
@@ -27,7 +27,7 @@ const SIDEBAR_LINKS = [
 
 function SidebarNav({ onLinkClick }: { onLinkClick?: () => void }) {
   return (
-    <nav className="flex-1 px-3 pt-4 space-y-0.5">
+    <nav className="flex-1 min-h-0 px-3 pt-2 space-y-0.5 overflow-y-auto">
       {SIDEBAR_LINKS.map(({ to, label, end, Icon }) => (
         <NavLink
           key={to}
@@ -35,7 +35,7 @@ function SidebarNav({ onLinkClick }: { onLinkClick?: () => void }) {
           end={end}
           onClick={onLinkClick}
           className={({ isActive }) =>
-            `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+            `flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
               isActive ? 'text-accent-green' : 'text-secondary hover:text-primary'
             }`
           }
@@ -43,11 +43,11 @@ function SidebarNav({ onLinkClick }: { onLinkClick?: () => void }) {
           {({ isActive }) => (
             <>
               <span
-                className={`flex items-center justify-center w-9 h-9 rounded-full shrink-0 transition-colors ${
+                className={`flex items-center justify-center w-8 h-8 rounded-full shrink-0 transition-colors ${
                   isActive ? 'bg-tertiary text-accent-green border border-white/10' : ''
                 }`}
               >
-                <Icon className="w-5 h-5" />
+                <Icon className="w-4 h-4" />
               </span>
               <span>{label}</span>
             </>
@@ -95,15 +95,36 @@ export default function DashboardLayout() {
                 animate={{ x: 0 }}
                 exit={{ x: '-100%' }}
                 transition={{ type: 'tween', duration: 0.2 }}
-                className="fixed inset-y-0 left-0 z-50 w-64 flex flex-col bg-secondary border-r border-white/10 pt-28 pb-6 lg:hidden"
+                className="fixed inset-y-0 left-0 z-50 w-64 flex flex-col bg-secondary border-r border-white/10 pt-4 pb-4 lg:hidden"
               >
+                {/* Logo way up + close (only close icon) */}
+                <div className="flex items-center justify-between gap-2 px-3 pb-3 mb-2 border-b border-white/10 shrink-0">
+                  <Link
+                    to="/"
+                    onClick={() => setSidebarOpen(false)}
+                    className="flex items-center gap-2 min-w-0"
+                  >
+                    <img src="/assets/Remifi logo.svg" alt="PayEcho" className="w-8 h-8 shrink-0" />
+                    <span className="text-lg font-bold text-primary truncate">PayEcho</span>
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => setSidebarOpen(false)}
+                    aria-label="Close menu"
+                    className="shrink-0 w-10 h-10 rounded-full flex items-center justify-center bg-accent-green text-white border-2 border-accent-green hover:bg-accent-green-hover shadow-lg ring-2 ring-white/20"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
                 <SidebarNav onLinkClick={() => setSidebarOpen(false)} />
-                <div className="px-3 pt-4 mt-auto border-t border-white/10 space-y-3 lg:hidden">
+                <div className="px-3 pt-3 mt-auto border-t border-white/10 space-y-2 shrink-0">
                   <div className="flex items-center justify-between">
                     <ThemeToggle />
                     <WalletButton />
                   </div>
-                  <p className="text-xs text-secondary">Base · USDC</p>
+                  <p className="text-[11px] text-secondary">Base · USDC</p>
                 </div>
               </motion.aside>
             </>

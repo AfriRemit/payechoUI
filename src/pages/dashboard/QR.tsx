@@ -23,22 +23,12 @@ export default function QR() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:items-stretch">
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="order-2 lg:order-1 flex min-h-0"
-        >
-          <QRDisplay mode={mode} fixedAmount={fixedAmount} vaultAddress={vaultAddress} />
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.05 }}
-          className="order-1 lg:order-2"
-        >
-          <div className="bg-secondary rounded-xl border border-white/10 p-5">
+      <div className="bg-secondary rounded-xl border border-white/10 overflow-hidden">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-0">
+          <div className="p-5 order-2 lg:order-1 flex min-h-0">
+            <QRDisplay mode={mode} fixedAmount={fixedAmount} vaultAddress={vaultAddress} />
+          </div>
+          <div className="p-5 order-1 lg:order-2 border-t lg:border-t-0 lg:border-l border-white/10">
             <h2 className="text-base font-semibold text-primary mb-3">Amount type</h2>
             <div className="flex rounded-lg bg-tertiary/80 p-1 border border-white/5">
               <button
@@ -80,7 +70,7 @@ export default function QR() {
               </p>
             </div>
           </div>
-        </motion.div>
+        </div>
       </div>
     </motion.div>
   );
