@@ -12,7 +12,7 @@ export default function WhitepaperPage() {
         <section>
           <h1 className="text-3xl sm:text-4xl font-semibold text-primary mb-3">Download Whitepaper</h1>
           <p className="text-secondary text-sm sm:text-base">
-            Get the full Payecho protocol specification: smart contract architecture, RewardBank backend, and merchant
+            Get the full Payecho protocol specification: smart contract architecture, payment infrastructure, and merchant
             UX flows.
           </p>
         </section>

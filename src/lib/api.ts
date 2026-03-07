@@ -3,17 +3,12 @@ const PRODUCTION_API_URL = 'https://payechobackend.onrender.com';
 export function getApiBaseUrl(): string {
   const envUrl = import.meta.env.VITE_API_URL as string | undefined;
   if (envUrl) return envUrl;
-  // In production (not localhost), use deployed backend so requests don't hit localhost
   if (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
     return PRODUCTION_API_URL;
   }
   return 'http://localhost:3001';
 }
 
-/**
- * POST JSON to the backend. For protected routes, pass token from useAuth().getToken() in opts.
- * Sends Privy identity token as Bearer and privy-id-token header.
- */
 export async function apiPostJson<TResponse>(
   path: string,
   body: unknown,
@@ -40,10 +35,6 @@ export async function apiPostJson<TResponse>(
   return data as TResponse;
 }
 
-/**
- * GET from the backend. For protected routes, pass token from useAuth().getToken() in opts.
- * Throws if response is not ok (e.g. 401).
- */
 export async function apiGetJson<TResponse>(
   path: string,
   opts?: { token?: string | null },
@@ -65,10 +56,6 @@ export async function apiGetJson<TResponse>(
   return data as TResponse;
 }
 
-/**
- * PATCH JSON to the backend. For protected routes, pass token from useAuth().getToken() in opts.
- * Throws if response is not ok (e.g. 401).
- */
 export async function apiPatchJson<TResponse>(
   path: string,
   body: unknown,
@@ -93,9 +80,6 @@ export async function apiPatchJson<TResponse>(
   return data as TResponse;
 }
 
-/**
- * POST and return response as blob (e.g. for /api/voice/speak or /api/voice/announce returning audio/mpeg).
- */
 export async function apiPostBlob(
   path: string,
   body: unknown,

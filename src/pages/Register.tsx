@@ -67,16 +67,13 @@ const Register: React.FC = () => {
         return;
       }
 
-      // Backend registers this merchant with the shared BankVault (no vault deployment)
       const result = await apiPostJson<{ vaultAddress?: string; txHash?: string; error?: string }>(
         '/api/merchants/register-onchain',
         {},
         { token },
       );
       if (!result.vaultAddress) {
-        throw new Error(
-          (result as { error?: string }).error || 'Backend could not register merchant onchain. Check server logs (CDP keys, paymaster, RPC).',
-        );
+        throw new Error((result as { error?: string }).error || 'Registration failed. Please try again later.');
       }
 
       const profile = await apiPostJson<{ error?: string }>(
@@ -103,13 +100,10 @@ const Register: React.FC = () => {
       const raw = err instanceof Error ? err.message : 'Registration failed';
       let msg = raw;
       if (err instanceof TypeError && raw === 'Failed to fetch') {
-        msg =
-          'Cannot reach the backend. If it’s on Render (payechobackend.onrender.com), it may be waking up — wait 30–60 seconds and try again. Or run locally: npm run start in payechoBackend.';
+        msg = 'Unable to connect. Please check your connection and try again.';
       } else if (/something went wrong|discord\.com/i.test(raw) && raw.length > 120) {
-        // Long generic message (e.g. SDK redirect to Discord): show short hint and ask to check terminal
-        msg = 'Registration failed. Ensure the backend is running and CDP wallet is configured. Check the backend terminal for details.';
+        msg = 'Registration failed. Please try again later.';
       }
-      // Otherwise show the actual backend error (e.g. missing CDP keys, DB error)
       toast.error(msg);
       console.error('[Register]', err);
     } finally {
@@ -293,7 +287,7 @@ const Register: React.FC = () => {
               </select>
             </div>
             <p className="text-[11px] text-secondary/70">
-              The backend registers your wallet with the shared BankVault; no vault is deployed. If registration fails, ensure the backend is running (port 3001) and check its terminal for errors.
+              Your wallet will be registered with the shared payment pool so you can receive USDC.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 pt-2">
               <button

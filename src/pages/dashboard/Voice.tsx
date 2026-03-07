@@ -181,8 +181,9 @@ export default function Voice() {
                   URL.revokeObjectURL(url);
                   setTestPlaying(false);
                 };
-              } catch {
-                toast.error('Voice is unavailable. Set ELEVENLABS_API_KEY on the server to enable it.');
+              } catch (e) {
+                const msg = e instanceof Error ? e.message : 'Voice is unavailable.';
+                toast.error(msg);
                 setTestPlaying(false);
               }
             }}

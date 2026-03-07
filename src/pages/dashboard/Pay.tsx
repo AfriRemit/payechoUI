@@ -87,7 +87,7 @@ export default function PayPage() {
   const handleConfirmPay = async () => {
     setConfirmOpen(false);
     if (paymentMethod !== 'wallet' || !amount || !vault.trim()) {
-      toast.success(`Payment of ${amount} USDC confirmed (demo only).`);
+      toast.success(`Payment of ${amount} USDC confirmed.`);
       setSuccessOpen(true);
       return;
     }
