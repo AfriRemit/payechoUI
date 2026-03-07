@@ -26,6 +26,7 @@ export function PayHeader({ parsed, onToggleSettings }: PayHeaderProps) {
               {parsed ? 'Pay merchant' : 'Pay to an address'}
             </h2>
             <p className="text-xs text-secondary">Pay with USDC on Base</p>
+            <p className="text-[10px] text-secondary/80 mt-0.5">Payment goes to the merchant; funds are collected in the shared vault.</p>
           </div>
         </div>
         <button

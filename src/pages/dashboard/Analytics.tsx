@@ -63,7 +63,7 @@ export default function Analytics() {
         </div>
         <div className="bg-secondary rounded-xl border border-white/10 p-6">
           <h2 className="text-lg font-semibold text-primary mb-4">Volume trend</h2>
-          <div className="h-48 min-h-[180px] w-full">
+          <div className="w-full" style={{ minHeight: 180, height: 192 }}>
             <ResponsiveContainer width="100%" height="100%" minHeight={180}>
               <LineChart data={DEMO_DATA}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--bg-tertiary)" opacity={0.5} />

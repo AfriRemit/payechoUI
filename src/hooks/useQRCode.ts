@@ -6,11 +6,12 @@ export interface QRPayload {
   proto: string;
   chain: string;
   vault: string;
+  merchant: string;
   mode: 'open' | 'fixed';
   amount: string | null;
 }
 
-export function useQRCode(vaultAddress: string, mode: 'open' | 'fixed', fixedAmount: string) {
+export function useQRCode(vaultAddress: string, merchantAddress: string, mode: 'open' | 'fixed', fixedAmount: string) {
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -20,10 +21,11 @@ export function useQRCode(vaultAddress: string, mode: 'open' | 'fixed', fixedAmo
       proto: 'payecho',
       chain: 'base',
       vault: vaultAddress,
+      merchant: merchantAddress,
       mode,
       amount: mode === 'fixed' && fixedAmount ? fixedAmount : null,
     }),
-    [vaultAddress, mode, fixedAmount],
+    [vaultAddress, merchantAddress, mode, fixedAmount],
   );
 
   useEffect(() => {

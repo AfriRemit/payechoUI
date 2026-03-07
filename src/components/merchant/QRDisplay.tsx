@@ -1,14 +1,13 @@
 import { useRef } from 'react';
 import { useQRCode } from '../../hooks/useQRCode';
-import { BASE_SEPOLIA_CHAIN_ID } from '../../lib/base-rpc';
-import { getMerchantVaultAddress } from '../../lib/contracts';
 
 interface QRDisplayProps {
   mode: 'open' | 'fixed';
   fixedAmount: string;
   onDownload?: () => void;
   onPrint?: () => void;
-  vaultAddress?: string;
+  vaultAddress: string;
+  merchantAddress: string;
 }
 
 export function QRDisplay({
@@ -16,10 +15,11 @@ export function QRDisplay({
   fixedAmount,
   onDownload,
   onPrint,
-  vaultAddress = getMerchantVaultAddress(BASE_SEPOLIA_CHAIN_ID),
+  vaultAddress,
+  merchantAddress,
 }: QRDisplayProps) {
   const qrImageRef = useRef<HTMLImageElement>(null);
-  const { qrDataUrl, error } = useQRCode(vaultAddress, mode, fixedAmount);
+  const { qrDataUrl, error } = useQRCode(vaultAddress, merchantAddress, mode, fixedAmount);
 
   const handleDownload = () => {
     if (!qrDataUrl) return;

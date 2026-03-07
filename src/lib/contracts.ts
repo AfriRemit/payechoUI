@@ -38,5 +38,10 @@ export function getContracts(chainId: number): PayEchoContracts {
 }
 
 export function getMerchantVaultAddress(_chainId?: number): string {
-  return import.meta.env.VITE_MERCHANT_VAULT_ADDRESS || '0x0000000000000000000000000000000000000000';
+  return getBankVaultAddress();
+}
+
+/** Single BankVault (payment pool) address. Same for all merchants. */
+export function getBankVaultAddress(): string {
+  return import.meta.env.VITE_BANK_VAULT_ADDRESS || import.meta.env.VITE_MERCHANT_VAULT_ADDRESS || '0x0000000000000000000000000000000000000000';
 }

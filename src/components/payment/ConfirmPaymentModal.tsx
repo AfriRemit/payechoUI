@@ -2,11 +2,12 @@ interface ConfirmPaymentModalProps {
   open: boolean;
   amount: string;
   vault: string;
+  merchant?: string;
   onConfirm: () => void;
   onCancel: () => void;
 }
 
-export function ConfirmPaymentModal({ open, amount, vault, onConfirm, onCancel }: ConfirmPaymentModalProps) {
+export function ConfirmPaymentModal({ open, amount, vault, merchant, onConfirm, onCancel }: ConfirmPaymentModalProps) {
   if (!open) return null;
 
   return (
@@ -15,12 +16,17 @@ export function ConfirmPaymentModal({ open, amount, vault, onConfirm, onCancel }
         <p className="text-base font-semibold text-primary">Confirm payment</p>
         <p className="text-sm text-secondary">
           You are about to pay{' '}
-          <span className="font-semibold text-primary">{amount || '—'} USDC</span> from your connected wallet to this
-          merchant vault:
+          <span className="font-semibold text-primary">{amount || '—'} USDC</span> from your connected wallet to the
+          payment pool; the amount will be credited to the merchant.
         </p>
         <p className="text-xs font-mono text-primary break-all bg-tertiary/60 border border-white/10 rounded-lg px-3 py-2">
-          {vault}
+          Pool: {vault}
         </p>
+        {merchant ? (
+          <p className="text-xs font-mono text-primary break-all bg-tertiary/60 border border-white/10 rounded-lg px-3 py-2">
+            Merchant (to credit): {merchant}
+          </p>
+        ) : null}
         <div className="flex gap-3 pt-2">
           <button
             type="button"

@@ -1,10 +1,12 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
+import { WagmiProvider } from 'wagmi';
 import { PrivyProvider } from '@privy-io/react-auth';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { baseSepolia } from 'viem/chains';
+import { getConfig } from './wagmi';
 import { AuthProvider } from './contexts/AuthContext';
 import { EnsureWallet } from './components/web3/EnsureWallet';
 
@@ -29,13 +31,15 @@ function PrivySetupRequired() {
 
 export function AppProviders(props: { children: ReactNode }) {
   const [queryClient] = useState(() => new QueryClient());
+  const wagmiConfig = useMemo(() => getConfig(), []);
 
   if (!privyAppId) {
     return <PrivySetupRequired />;
   }
 
   return (
-    <PrivyProvider
+    <WagmiProvider config={wagmiConfig}>
+      <PrivyProvider
       appId={privyAppId}
       config={{
         // Enable Google & X in Privy Dashboard → Login methods, or they won't appear
@@ -61,5 +65,6 @@ export function AppProviders(props: { children: ReactNode }) {
         </AuthProvider>
       </QueryClientProvider>
     </PrivyProvider>
+    </WagmiProvider>
   );
 }

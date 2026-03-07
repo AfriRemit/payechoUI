@@ -13,9 +13,22 @@ export interface UserProfileResponse {
   updatedAt: string;
 }
 
+export interface MerchantProfileResponse {
+  address: string;
+  name: string;
+  category: string;
+  location?: string;
+  phone?: string;
+  email?: string;
+  preferredLanguage?: string;
+  vaultAddress: string;
+  registeredAt: string;
+}
+
 export default function Profile() {
   const { getToken, address } = useAuth();
   const [profile, setProfile] = useState<UserProfileResponse | null>(null);
+  const [merchant, setMerchant] = useState<MerchantProfileResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -35,13 +48,23 @@ export default function Profile() {
         return;
       }
       try {
-        const data = await apiGetJson<UserProfileResponse>('/api/profile', { token });
-        if (!cancelled && data?.walletAddress) {
-          setProfile(data);
+        const [userData, merchantData] = await Promise.all([
+          apiGetJson<UserProfileResponse>('/api/profile', { token }),
+          address
+            ? apiGetJson<MerchantProfileResponse | { error: string }>(
+                `/api/merchants/${encodeURIComponent(address)}`,
+                { token },
+              ).catch(() => null)
+            : Promise.resolve(null),
+        ]);
+        if (!cancelled && userData?.walletAddress) {
+          setProfile(userData);
+          const m = merchantData && !('error' in merchantData) ? merchantData : null;
+          setMerchant(m ?? null);
           setEdit({
-            displayName: data.displayName ?? '',
-            email: data.email ?? '',
-            phone: data.phone ?? '',
+            displayName: userData.displayName ?? (m?.name && m.name !== 'Unnamed' ? m.name : '') ?? '',
+            email: userData.email ?? m?.email ?? '',
+            phone: userData.phone ?? m?.phone ?? '',
           });
         } else if (!cancelled) {
           setProfile(null);
@@ -138,6 +161,50 @@ export default function Profile() {
           This is your wallet address (created when you logged in). Use it to receive payments and link your merchant vault.
         </p>
       </div>
+
+      {/* Merchant details (from registration) */}
+      {merchant ? (
+        <div className="bg-secondary rounded-xl border border-white/10 p-6">
+          <h2 className="text-sm font-semibold text-secondary uppercase tracking-wide mb-3">
+            Merchant details
+          </h2>
+          <dl className="grid gap-2 text-sm">
+            <div>
+              <dt className="text-secondary">Business name</dt>
+              <dd className="text-primary font-medium">{merchant.name}</dd>
+            </div>
+            <div>
+              <dt className="text-secondary">Category</dt>
+              <dd className="text-primary">{merchant.category}</dd>
+            </div>
+            {merchant.location && (
+              <div>
+                <dt className="text-secondary">Location</dt>
+                <dd className="text-primary">{merchant.location}</dd>
+              </div>
+            )}
+            {merchant.preferredLanguage && (
+              <div>
+                <dt className="text-secondary">Preferred language</dt>
+                <dd className="text-primary">{merchant.preferredLanguage}</dd>
+              </div>
+            )}
+            <div>
+              <dt className="text-secondary">Payment pool (BankVault)</dt>
+              <dd className="text-primary font-mono text-xs break-all">{merchant.vaultAddress}</dd>
+            </div>
+          </dl>
+          <p className="text-xs text-secondary mt-3">
+            These were saved when you registered as a merchant. Payments to your QR go to the shared pool above.
+          </p>
+        </div>
+      ) : (
+        <div className="bg-secondary/50 rounded-xl border border-white/10 p-6">
+          <p className="text-secondary text-sm">
+            No merchant profile yet. Complete <strong>Register</strong> (Step 2) to add your business details and get your payment QR.
+          </p>
+        </div>
+      )}
 
       {/* Editable profile */}
       <form onSubmit={handleSave} className="bg-secondary rounded-xl border border-white/10 p-6 space-y-5">

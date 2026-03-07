@@ -53,7 +53,7 @@ export default function Identity() {
 
       <div className="bg-secondary rounded-xl border border-white/10 p-6">
         <h2 className="text-lg font-semibold text-primary mb-4">90-day score trend</h2>
-        <div className="h-40 min-h-[160px] w-full">
+        <div className="w-full" style={{ minHeight: 160, height: 160 }}>
           <ResponsiveContainer width="100%" height="100%" minHeight={160}>
             <LineChart data={SCORE_HISTORY}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--bg-tertiary)" opacity={0.5} />

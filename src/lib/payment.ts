@@ -27,14 +27,16 @@ export function formatUSDC(raw: bigint): string {
 }
 
 /**
- * Build payment URL for QR code — customers scan and land on /pay.
+ * Build payment URL for QR — customers scan and land on /pay.
+ * BankVault: vault = BankVault address, merchant = wallet to credit.
  */
-export function buildPaymentUrl(vaultAddress: string, mode: 'open' | 'fixed', fixedAmount?: string): string {
+export function buildPaymentUrl(vaultAddress: string, merchantAddress: string, mode: 'open' | 'fixed', fixedAmount?: string): string {
   const base = typeof window !== 'undefined'
     ? window.location.origin
     : import.meta.env.VITE_APP_URL || 'https://payecho.xyz';
   const params = new URLSearchParams();
   params.set('vault', vaultAddress);
+  params.set('merchant', merchantAddress);
   params.set('mode', mode);
   if (mode === 'fixed' && fixedAmount && Number(fixedAmount) > 0) {
     params.set('amount', fixedAmount);
@@ -43,12 +45,13 @@ export function buildPaymentUrl(vaultAddress: string, mode: 'open' | 'fixed', fi
 }
 
 /**
- * Parse payment params from URL search.
+ * Parse payment params from URL search (vault, merchant, amount, mode).
  */
-export function parsePaymentParams(search: string): { vault: string; mode: 'open' | 'fixed'; amount: string | null } {
+export function parsePaymentParams(search: string): { vault: string; merchant: string; mode: 'open' | 'fixed'; amount: string | null } {
   const params = new URLSearchParams(search);
   const vault = params.get('vault') || '';
+  const merchant = params.get('merchant') || '';
   const mode = (params.get('mode') || 'open') as 'open' | 'fixed';
   const amount = params.get('amount');
-  return { vault, mode, amount: amount || null };
+  return { vault, merchant, mode, amount: amount || null };
 }

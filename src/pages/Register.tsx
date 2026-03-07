@@ -67,13 +67,16 @@ const Register: React.FC = () => {
         return;
       }
 
-      const sponsored = await apiPostJson<{ vaultAddress?: string; txHash?: string; error?: string }>(
+      // Backend registers this merchant with the shared BankVault (no vault deployment)
+      const result = await apiPostJson<{ vaultAddress?: string; txHash?: string; error?: string }>(
         '/api/merchants/register-onchain',
         {},
         { token },
       );
-      if (!sponsored.vaultAddress) {
-        throw new Error(sponsored.error || 'Failed to create vault onchain');
+      if (!result.vaultAddress) {
+        throw new Error(
+          (result as { error?: string }).error || 'Backend could not register merchant onchain. Check server logs (CDP keys, paymaster, RPC).',
+        );
       }
 
       const profile = await apiPostJson<{ error?: string }>(
@@ -85,7 +88,7 @@ const Register: React.FC = () => {
           phone: form.phone,
           email: form.email,
           preferredLanguage: form.language,
-          vaultAddress: sponsored.vaultAddress,
+          vaultAddress: result.vaultAddress,
         },
         { token },
       );
@@ -94,10 +97,20 @@ const Register: React.FC = () => {
       }
 
       completeOnboarding();
-      toast.success('Vault created (sponsored). Merchant profile saved.');
+      toast.success('Merchant registered onchain. Profile saved.');
       navigate('/register/success');
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Registration failed');
+      const raw = err instanceof Error ? err.message : 'Registration failed';
+      let msg = raw;
+      if (err instanceof TypeError && raw === 'Failed to fetch') {
+        msg = 'Cannot reach the backend. Is it running on http://localhost:3001? Start it with: npm run start (in payechoBackend).';
+      } else if (/something went wrong|discord\.com/i.test(raw) && raw.length > 120) {
+        // Long generic message (e.g. SDK redirect to Discord): show short hint and ask to check terminal
+        msg = 'Registration failed. Ensure the backend is running and CDP wallet is configured. Check the backend terminal for details.';
+      }
+      // Otherwise show the actual backend error (e.g. missing CDP keys, DB error)
+      toast.error(msg);
+      console.error('[Register]', err);
     } finally {
       setSubmitting(false);
     }
@@ -158,7 +171,7 @@ const Register: React.FC = () => {
             Create your merchant profile
           </h1>
           <p className="text-secondary text-sm mb-6">
-            This powers your onchain identity and future credit scoring. All fields are required.
+            Your wallet will be registered with the shared payment pool (BankVault) so you can receive USDC. All fields are required.
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-5">
@@ -278,13 +291,16 @@ const Register: React.FC = () => {
                 ))}
               </select>
             </div>
+            <p className="text-[11px] text-secondary/70">
+              The backend registers your wallet with the shared BankVault; no vault is deployed. If registration fails, ensure the backend is running (port 3001) and check its terminal for errors.
+            </p>
             <div className="flex flex-col sm:flex-row gap-3 pt-2">
               <button
                 type="submit"
                 disabled={submitting || !address}
                 className="flex-1 rounded-full bg-accent-green px-5 py-2.5 text-sm font-medium text-white hover:bg-accent-green-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {submitting ? 'Creating vault…' : 'Continue → Deploy vault & get QR'}
+                {submitting ? 'Registering merchant…' : 'Register merchant & get QR'}
               </button>
               <Link
                 to="/dashboard"
