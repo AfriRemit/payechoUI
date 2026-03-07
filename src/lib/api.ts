@@ -60,9 +60,9 @@ export async function apiGetJson<TResponse>(
     },
   });
 
-  const data = (await res.json().catch(() => ({}))) as TResponse;
-  if (!res.ok) throw new Error((data as { message?: string })?.message || `Request failed: ${res.status}`);
-  return data;
+  const data = (await res.json().catch(() => ({}))) as TResponse & { message?: string; error?: string };
+  if (!res.ok) throw new Error(data?.message ?? data?.error ?? `Request failed: ${res.status}`);
+  return data as TResponse;
 }
 
 /**
