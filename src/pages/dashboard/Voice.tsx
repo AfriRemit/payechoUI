@@ -182,7 +182,7 @@ export default function Voice() {
                   setTestPlaying(false);
                 };
               } catch {
-                toast.error('Voice failed. Check ELEVENLABS_API_KEY on the backend.');
+                toast.error('Voice is unavailable. Set ELEVENLABS_API_KEY on the server to enable it.');
                 setTestPlaying(false);
               }
             }}

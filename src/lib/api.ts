@@ -1,6 +1,13 @@
+const PRODUCTION_API_URL = 'https://payechobackend.onrender.com';
+
 export function getApiBaseUrl(): string {
-  // Local dev: use .env or default to backend on port 3001. For production, set VITE_API_URL to your backend URL.
-  return (import.meta.env.VITE_API_URL as string | undefined) ?? 'http://localhost:3001';
+  const envUrl = import.meta.env.VITE_API_URL as string | undefined;
+  if (envUrl) return envUrl;
+  // In production (not localhost), use deployed backend so requests don't hit localhost
+  if (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+    return PRODUCTION_API_URL;
+  }
+  return 'http://localhost:3001';
 }
 
 /**

@@ -114,8 +114,8 @@ export default function Analytics() {
           {loading ? (
             <div className="h-48 flex items-center justify-center text-secondary text-sm">Loading…</div>
           ) : (
-            <div className="w-full" style={{ minHeight: 180, height: 192 }}>
-              <ResponsiveContainer width="100%" height="100%" minHeight={180}>
+            <div className="w-full min-w-0" style={{ minHeight: 180, height: 192 }}>
+              <ResponsiveContainer width="100%" height={192} minHeight={180}>
                 <LineChart data={volumeData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--bg-tertiary)" opacity={0.5} />
                   <XAxis dataKey="label" tick={{ fill: 'var(--text-secondary)', fontSize: 12 }} />
