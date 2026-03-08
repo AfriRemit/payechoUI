@@ -32,13 +32,18 @@ function PrivySetupRequired() {
 export function AppProviders(props: { children: ReactNode }) {
   const [queryClient] = useState(() => new QueryClient());
   const wagmiConfig = useMemo(() => getConfig(), []);
+  // On mobile, avoid auto-reconnect so we don't trigger "Provider not found" when stored connector was injected (no provider in mobile browser).
+  const reconnectOnMount = useMemo(() => {
+    if (typeof navigator === 'undefined') return true;
+    return !/Android|iPhone|iPad|iPod|webOS|Mobi|BlackBerry|IEMobile/i.test(navigator.userAgent);
+  }, []);
 
   if (!privyAppId) {
     return <PrivySetupRequired />;
   }
 
   return (
-    <WagmiProvider config={wagmiConfig}>
+    <WagmiProvider config={wagmiConfig} reconnectOnMount={reconnectOnMount}>
       <PrivyProvider
       appId={privyAppId}
       config={{

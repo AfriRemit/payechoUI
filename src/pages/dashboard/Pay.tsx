@@ -269,24 +269,39 @@ export default function PayPage() {
                     </button>
                   </>
                 ) : (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      connect(
-                        { connector: connectConnector },
-                        {
-                          onError: (err) => {
-                            toast.error(err?.message ?? 'Connection failed');
+                  isMobile && !hasWalletConnect ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setWalletMenuOpen(false);
+                        window.location.href = openInWalletAppUrl;
+                      }}
+                      className="w-full px-3 py-2 text-left text-sm text-primary hover:bg-white/10"
+                    >
+                      Connect wallet
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        connect(
+                          { connector: connectConnector },
+                          {
+                            onError: (err) => {
+                              const msg = err?.message ?? 'Connection failed';
+                              if (/provider not found/i.test(msg)) window.location.href = openInWalletAppUrl;
+                              else toast.error(msg);
+                            },
                           },
-                        },
-                      );
-                      setWalletMenuOpen(false);
-                    }}
-                    disabled={isConnectPending}
-                    className="w-full px-3 py-2 text-left text-sm text-primary hover:bg-white/10 disabled:opacity-50"
-                  >
-                    {isConnectPending ? 'Connecting…' : 'Connect wallet'}
-                  </button>
+                        );
+                        setWalletMenuOpen(false);
+                      }}
+                      disabled={isConnectPending}
+                      className="w-full px-3 py-2 text-left text-sm text-primary hover:bg-white/10 disabled:opacity-50"
+                    >
+                      {isConnectPending ? 'Connecting…' : 'Connect wallet'}
+                    </button>
+                  )
                 )}
               </div>
             )}
@@ -345,33 +360,52 @@ export default function PayPage() {
             <div className="rounded-xl border border-white/10 bg-tertiary/30 p-4 space-y-3">
               {!walletAddress ? (
                 <>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      connect(
-                        { connector: connectConnector },
-                        {
-                          onError: (err) => {
-                            const msg = err?.message ?? 'Connection failed';
-                            toast.error(msg);
-                          },
-                        },
-                      );
-                    }}
-                    disabled={isConnectPending}
-                    className="w-full rounded-lg bg-accent-green px-4 py-3 text-sm font-semibold text-white hover:bg-accent-green-hover disabled:opacity-50 active:scale-[0.98] touch-manipulation"
-                  >
-                    {isConnectPending ? 'Connecting…' : 'Connect wallet'}
-                  </button>
-                  {isMobile && hasWalletConnect && (
-                    <p className="text-[11px] text-secondary text-center">
-                      Choose your wallet in the list, then approve in your wallet app.
-                    </p>
-                  )}
-                  {isMobile && !hasWalletConnect && (
-                    <p className="text-[11px] text-secondary text-center">
-                      <a href={openInWalletAppUrl} target="_blank" rel="noopener noreferrer" className="text-accent-green hover:underline font-medium">Open in your wallet app</a> to connect and pay (e.g. MetaMask → Browser).
-                    </p>
+                  {isMobile && !hasWalletConnect ? (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          window.location.href = openInWalletAppUrl;
+                        }}
+                        className="block w-full rounded-lg bg-accent-green px-4 py-3 text-sm font-semibold text-white hover:bg-accent-green-hover text-center active:scale-[0.98] touch-manipulation"
+                      >
+                        Connect wallet
+                      </button>
+                      <p className="text-[11px] text-secondary text-center">
+                        Opens MetaMask app to connect. Approve there, then return here to pay.
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          connect(
+                            { connector: connectConnector },
+                            {
+                              onError: (err) => {
+                                const msg = err?.message ?? 'Connection failed';
+                                const isProviderNotFound = /provider not found/i.test(msg);
+                                if (isProviderNotFound) {
+                                  window.location.href = openInWalletAppUrl;
+                                  return;
+                                }
+                                toast.error(msg);
+                              },
+                            },
+                          );
+                        }}
+                        disabled={isConnectPending}
+                        className="w-full rounded-lg bg-accent-green px-4 py-3 text-sm font-semibold text-white hover:bg-accent-green-hover disabled:opacity-50 active:scale-[0.98] touch-manipulation"
+                      >
+                        {isConnectPending ? 'Connecting…' : 'Connect wallet'}
+                      </button>
+                      {isMobile && hasWalletConnect && (
+                        <p className="text-[11px] text-secondary text-center">
+                          Choose your wallet in the list, then approve in your wallet app.
+                        </p>
+                      )}
+                    </>
                   )}
                 </>
               ) : needsSwitch ? (
