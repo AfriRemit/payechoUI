@@ -48,14 +48,13 @@ export default function PayPage() {
   const { connect, connectors, isPending: isConnectPending } = useConnect();
   const { disconnect } = useDisconnect();
 
-  // Connect to the user's installed wallet (injected = MetaMask, Brave, etc.). On mobile browser, if no wallet: open in MetaMask app.
+  // Same as desktop: connect to installed wallet so user can sign transactions (approve + acceptPayment).
   const isMobile = typeof navigator !== 'undefined' && /Android|iPhone|iPad|iPod|webOS|Mobi|BlackBerry|IEMobile/i.test(navigator.userAgent);
   const connectConnector = useMemo(() => {
     const injected = connectors.find((c) => c.id === 'injected');
     const coinbase = connectors.find((c) => c.id?.toLowerCase().includes('coinbase'));
     return injected ?? coinbase ?? connectors[0];
   }, [connectors]);
-  const openInWalletAppUrl = typeof window !== 'undefined' ? `https://link.metamask.io/dapp/${encodeURIComponent(window.location.href)}` : '';
   const { switchChain, isPending: isSwitchPending } = useSwitchChain();
   const contracts = getContracts(chain?.id ?? baseSepolia.id);
   const targetChainId = baseSepolia.id; // MVP: Base Sepolia
@@ -292,9 +291,7 @@ export default function PayPage() {
                           { connector: connectConnector },
                           {
                             onError: (err) => {
-                              const msg = err?.message ?? 'Connection failed';
-                              if (/provider not found/i.test(msg) && isMobile) window.location.href = openInWalletAppUrl;
-                              else toast.error(msg);
+                              toast.error(err?.message ?? 'Connection failed');
                             },
                           },
                         );
@@ -370,9 +367,7 @@ export default function PayPage() {
                         { connector: connectConnector },
                         {
                           onError: (err) => {
-                            const msg = err?.message ?? 'Connection failed';
-                            if (/provider not found/i.test(msg) && isMobile) window.location.href = openInWalletAppUrl;
-                            else toast.error(msg);
+                            toast.error(err?.message ?? 'Connection failed');
                           },
                         },
                       );
@@ -382,15 +377,6 @@ export default function PayPage() {
                   >
                     {isConnectPending ? 'Connecting…' : 'Connect wallet'}
                   </button>
-                  {isMobile && (
-                    <p className="text-[11px] text-secondary text-center">
-                      No wallet in this browser?{' '}
-                      <button type="button" onClick={() => { window.location.href = openInWalletAppUrl; }} className="text-accent-green hover:underline font-medium">
-                        Open in MetaMask app
-                      </button>{' '}
-                      to connect and pay.
-                    </p>
-                  )}
                 </>
               ) : needsSwitch ? (
                 <>
