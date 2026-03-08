@@ -15,7 +15,13 @@ interface AmountSectionProps {
 export function AmountSection({
   mode,
   amount,
+  vault,
+  merchant,
   onChangeAmount,
+  vaultEditable,
+  onVaultChange,
+  merchantEditable,
+  onMerchantChange,
 }: AmountSectionProps) {
   return (
     <div className="px-6 py-6 space-y-2">
@@ -40,6 +46,30 @@ export function AmountSection({
           />
           <span className="text-secondary text-sm shrink-0">USDC</span>
         </div>
+      )}
+      {vaultEditable && (
+        <>
+          <label className="block text-sm font-medium text-secondary pt-2">Vault address</label>
+          <input
+            type="text"
+            value={vault}
+            onChange={(e) => onVaultChange?.(e.target.value)}
+            placeholder="0x... (from merchant or QR)"
+            className="w-full rounded-xl bg-tertiary border border-white/10 px-4 py-3 text-sm text-primary placeholder:text-secondary/60 outline-none focus:border-white/20"
+          />
+        </>
+      )}
+      {merchantEditable && (
+        <>
+          <label className="block text-sm font-medium text-secondary pt-2">Merchant address</label>
+          <input
+            type="text"
+            value={merchant ?? ''}
+            onChange={(e) => onMerchantChange?.(e.target.value)}
+            placeholder="0x... (wallet to credit)"
+            className="w-full rounded-xl bg-tertiary border border-white/10 px-4 py-3 text-sm text-primary placeholder:text-secondary/60 outline-none focus:border-white/20"
+          />
+        </>
       )}
     </div>
   );

@@ -8,7 +8,7 @@ import { ConfirmPaymentModal } from '../../components/payment/ConfirmPaymentModa
 import { PaymentSuccessModal } from '../../components/payment/PaymentSuccessModal';
 import type { PayMode, PayPayload, PaymentMethod } from '../../components/payment/types';
 import { parseUSDC, formatUSDC } from '../../lib/payment';
-import { getContracts } from '../../lib/contracts';
+import { getContracts, getBankVaultAddress } from '../../lib/contracts';
 import { getApiBaseUrl } from '../../lib/api';
 import { BANK_VAULT_ABI } from '../../lib/ABI/BankVault_ABI';
 import { ERC20_ABI as ERC20_FULL_ABI } from '../../lib/ABI/ERC20_ABI';
@@ -29,6 +29,7 @@ const ERC20_ABI = [
 ] as const;
 
 const ZERO_REF: `0x${string}` = '0x0000000000000000000000000000000000000000000000000000000000000000';
+const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 
 /**
  * Customer payment screen. Scan QR → /pay?payload=... or /pay?vault=&merchant=&amount=
@@ -37,7 +38,6 @@ const ZERO_REF: `0x${string}` = '0x000000000000000000000000000000000000000000000
 export default function PayPage() {
   const [searchParams] = useSearchParams();
   const [overrideAmount, setOverrideAmount] = useState('');
-  const [manualVaultAddress, setManualVaultAddress] = useState('');
   const [manualMerchantAddress, setManualMerchantAddress] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('wallet');
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -88,18 +88,18 @@ export default function PayPage() {
         return null;
       }
     }
-    const vault = searchParams.get('vault') ?? '';
+    const vault = searchParams.get('vault') ?? getBankVaultAddress();
     const merchant = searchParams.get('merchant') ?? '';
     const mode = (searchParams.get('mode') || 'open') as PayMode;
     const amount = searchParams.get('amount');
-    if (!vault) return null;
+    if (!vault || vault === ZERO_ADDRESS) return null;
     return { proto: 'payecho', vault, merchant, mode, amount: amount || null };
   }, [searchParams]);
 
   const mode: PayMode = parsed?.mode ?? 'open';
   const initialAmount = parsed?.amount ?? searchParams.get('amount') ?? '';
   const amount = mode === 'fixed' ? initialAmount : overrideAmount;
-  const vault = parsed?.vault ?? manualVaultAddress;
+  const vault = parsed?.vault ?? getBankVaultAddress();
   const merchant = parsed?.merchant ?? searchParams.get('merchant') ?? manualMerchantAddress;
 
   const amountWeiForCheck = useMemo(() => parseUSDC(amount || '0'), [amount]);
@@ -107,7 +107,7 @@ export default function PayPage() {
 
   const handleRequestPay = () => {
     if (!amount || paymentMethod !== 'wallet') return;
-    if (!parsed && !vault.trim()) return;
+    if ((!vault || vault === ZERO_ADDRESS)) return;
     if (hasInsufficientBalance) {
       toast.error('Insufficient USDC balance');
       return;
@@ -321,8 +321,7 @@ export default function PayPage() {
           vault={vault}
           merchant={merchant}
           onChangeAmount={setOverrideAmount}
-          vaultEditable={!parsed}
-          onVaultChange={setManualVaultAddress}
+          vaultEditable={false}
           merchantEditable={!parsed}
           onMerchantChange={setManualMerchantAddress}
         />
@@ -403,7 +402,7 @@ export default function PayPage() {
                   )}
                   <button
                     type="button"
-                    disabled={!amount || !vault.trim() || !!hasInsufficientBalance}
+                    disabled={!amount || !vault.trim() || vault === ZERO_ADDRESS || !!hasInsufficientBalance}
                     onClick={handleRequestPay}
                     className="w-full rounded-lg bg-accent-green px-4 py-3 text-sm font-semibold text-white hover:bg-accent-green-hover disabled:opacity-50 disabled:cursor-not-allowed"
                   >
